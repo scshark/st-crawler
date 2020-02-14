@@ -5,6 +5,6 @@ type Request struct {
 	ParseFunction func([]byte) ParseResult
 }
 type ParseResult struct {
-	Request Request
-	item []interface{}
+	Request []Request
+	Item []interface{}
 }
