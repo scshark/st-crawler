@@ -26,7 +26,10 @@ func Run(seeds ...Request)  {
 		result := r.ParseFunction(body)
 
 		requests = append(requests,result.Request...)
-		log.Printf("%s  ",result.Item)
+
+		for _,item := range result.Item{
+			log.Printf("%s",item)
+		}
 
 	}
 	

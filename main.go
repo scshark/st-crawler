@@ -1,8 +1,8 @@
 package main
 
 import (
+	"st-crawler/XuanGuBao/parser"
 	"st-crawler/engine"
-	"st-crawler/parse/XuanGuBao"
 )
 
 func main() {
