@@ -3,27 +3,80 @@ package XuanGuBao
 import (
 	"regexp"
 	"st-crawler/engine"
+	"st-crawler/model"
+	"strings"
 )
-// <div class="meta_1SSLH"><div class="title_1yCTf"><a href="/stock/603106.SS" target="_blank"><header> 恒银金融 </header> <span>603106.SS</span></a></div> <div class="price_1b2oR"><span class="number-color-up DIN-Medium">7.88</span></div> <div><span class="number-color-up DIN-Medium">+6.92%</span></div></div>
+
+// datetime and source
+var articleParseCompile = regexp.MustCompile(
+	`<div class="meta_[a-zA-Z0-9]+"><time>([^>]+)</time>.*?[<span>]*?([^->]*?)[</span>]*?</div>`)
+// content
+var summaryParseCompile = regexp.MustCompile(
+	`<pre.*class="pre_[a-zA-Z0-9]+">([^>]+)</pre>`)
+// stock
 var stockParseCompile = regexp.MustCompile(
 	`<div class="title_[a-zA-Z0-9]+"><a href="/stock/.+".+><header>([^>]+)</header>.*<span>([0-9]+.[A-Z]*)</span>.*<div class="price_[a-zA-Z0-9]+"><span.+>([^<]+)</span>.+>([^<]+%)</span>`)
+// plate
+var plateParseCompile = regexp.MustCompile(
+	`<div class="info_[0-9a-zA-Z]+"><header><a.+>([^<]+)</a></header>[^<]?<span[^>]+>([^<]+)</span>`)
 
-func StockParse(content []byte) engine.ParseResult{
-	header := stockParseCompile.FindAllSubmatch(content,-1)
+func StockParse(title string, content []byte) engine.ParseResult {
 
+	//
 	parseResult := engine.ParseResult{}
-	for _,h := range header{
-		if len(h) == 0 {
-			continue
-		}
-		content := string(h[1]) + string(h[2]) +"  "+ string(h[3]) +"  "+ string(h[4])+"  "
-		// itemData := make(map[string]string)
-		// itemData["stockName"] = string(h[1])
-		// itemData["code"] = string(h[2])
-		// itemData["price"] = string(h[3])
-		// itemData["float"] = string(h[4])
+	// article
+	article := model.Article{}
+	article.Title = title
+	articleSub := extractSlice(content, articleParseCompile, 2)
+	article.DateTime = articleSub[0]
+	article.Source = articleSub[1]
+	summarySub := extractSlice(content, summaryParseCompile, 1)
+	article.Content = summarySub[0]
+	// stock
+	var stock []model.Stock
+	stockSub := stockParseCompile.FindAllSubmatch(content, -1)
+	if len(stockSub) > 0 {
+		for _, s := range stockSub {
+			mStock := model.Stock{}
 
-		parseResult.Item = append(parseResult.Item,content)
+			stockName := strings.Replace(string(s[1]), "\n", "", -1)
+			stockName = strings.Replace(stockName, " ", "", -1)
+			mStock.Name = stockName
+			mStock.Code = string(s[2])
+			mStock.Price = string(s[3])
+			mStock.Float = string(s[4])
+			stock = append(stock, mStock)
+		}
 	}
+
+	// plate
+	var plate []model.Plate
+	plateSub := plateParseCompile.FindAllSubmatch(content, -1)
+	if len(plateSub) > 0 {
+		for _, p := range plateSub {
+			mPlate := model.Plate{}
+
+			plateName := strings.Replace(string(p[1]), "\n", "", -1)
+			plateName = strings.Replace(plateName, " ", "", -1)
+			mPlate.Name = plateName
+			mPlate.Float = string(p[2])
+			plate = append(plate, mPlate)
+		}
+	}
+
+	parseResult.Item = append(parseResult.Item, article, stock, plate)
 	return parseResult
+}
+func extractSlice(content []byte, compile *regexp.Regexp, i int) []string {
+	match := compile.FindSubmatch(content)
+	result := make([]string, i)
+
+	if len(match) > i {
+		for k := range result {
+			result[k] = string(match[k+1])
+		}
+		// result
+	}
+
+	return result
 }
