@@ -9,7 +9,7 @@ import (
 
 // datetime and source
 var articleParseCompile = regexp.MustCompile(
-	`<div class="meta_[a-zA-Z0-9]+"><time>([^>]+)</time>.*?[<span>]*?([^->]*?)[</span>]*?</div>`)
+	`<div class="meta_[a-zA-Z0-9]+"><time>([^>]+)</time>.*?[<span>]*?([^<!>]*?)[</span>]*?</div>`)
 // content
 var summaryParseCompile = regexp.MustCompile(
 	`<pre.*class="pre_[a-zA-Z0-9]+">([^>]+)</pre>`)
@@ -29,7 +29,7 @@ func StockParse(title string, content []byte) engine.ParseResult {
 	article.Title = title
 	articleSub := extractSlice(content, articleParseCompile, 2)
 	article.DateTime = articleSub[0]
-	article.Source = articleSub[1]
+	article.Source = strings.Replace(articleSub[1],"--","",-1)
 	summarySub := extractSlice(content, summaryParseCompile, 1)
 	article.Content = summarySub[0]
 	// stock

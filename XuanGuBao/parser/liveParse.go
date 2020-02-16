@@ -15,12 +15,12 @@ func LiveParse(content []byte) engine.ParseResult {
 	header := parseCompile.FindAllSubmatch(content, -1)
 	parseResult := engine.ParseResult{}
 	for _, h := range header {
-		title := string(h[2])
+		title := strings.Replace(strings.Replace(string(h[2])," ","",-1),"\n","",-1)
 		resUrl := string(h[1])
 		if strings.Index(resUrl, "xuangubao.cn") == -1 {
 			resUrl = "https://xuangubao.cn" + resUrl
 		}
-		parseResult.Item = append(parseResult.Item, h[2])
+		parseResult.Item = append(parseResult.Item, title)
 		parseResult.Request = append(parseResult.Request, engine.Request{
 			Url: resUrl,
 			ParseFunction: func(bytes []byte) engine.ParseResult {
